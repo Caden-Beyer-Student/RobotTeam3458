@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class DriveSubsystem extends SubsystemBase {
 
-        private static final double MAX_SPEED = 3.0; // m/s
+        private static final double MAX_SPEED = 0.5; // m/s
         private static final double MAX_ANGULAR_SPEED = 2 * Math.PI;
 
         private final double TRACK_WIDTH = 0.6;
@@ -21,7 +21,7 @@ public class DriveSubsystem extends SubsystemBase {
         // Initialize MK4iSwerveModules with proper CAN IDs and offsets
         private final MK4iSwerveModule frontLeft = new MK4iSwerveModule(1, 2, 11, 1.570796);
         private final MK4iSwerveModule frontRight = new MK4iSwerveModule(3, 4, 12, 1.570796);
-        private final MK4iSwerveModule backLeft = new MK4iSwerveModule(5, 6, 13, 1.570796);
+        private final MK4iSwerveModule backLeft = new MK4iSwerveModule(6, 5, 13, 1.570796);
         private final MK4iSwerveModule backRight = new MK4iSwerveModule(7, 8, 14, 1.570796);
 
         private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
@@ -43,6 +43,13 @@ public class DriveSubsystem extends SubsystemBase {
         };
 
         public DriveSubsystem() {
+
+                // FIX: ensure absolute encoders sync before driving
+                frontLeft.syncEncoders();
+                frontRight.syncEncoders();
+                backLeft.syncEncoders();
+                backRight.syncEncoders();
+
                 pose = new Pose2d(2.0, 4.0, Rotation2d.fromDegrees(180));
                 robotAngle = pose.getRotation();
                 lastTime = Timer.getFPGATimestamp();
@@ -51,6 +58,7 @@ public class DriveSubsystem extends SubsystemBase {
         }
 
         public void drive(double xInput, double yInput, double rotInput) {
+
                 // Stick magnitude and angle
                 double stickMagnitude = Math.min(1.0, Math.sqrt(xInput * xInput + yInput * yInput));
                 double stickAngle = Math.atan2(yInput, xInput);
@@ -69,15 +77,9 @@ public class DriveSubsystem extends SubsystemBase {
                 // Desaturate speeds
                 SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, MAX_SPEED);
 
-                // Optimize each module using the actual module angle
-                // Instead of this (causes void -> SwerveModuleState error):
-                // desiredStates[0].optimize(frontLeft.getAngle());
-
-                // Do this:
-                desiredStates[0].optimize(frontLeft.getAngle());
-                desiredStates[1].optimize(frontRight.getAngle());
-                desiredStates[2].optimize(backLeft.getAngle());
-                desiredStates[3].optimize(backRight.getAngle());
+                // FIX: remove optimize() calls because your MK4iSwerveModule
+                // already performs optimization internally. Doing it twice
+                // can cause steering jitter.
 
                 // Apply to modules
                 frontLeft.setDesiredState(desiredStates[0]);
@@ -91,16 +93,20 @@ public class DriveSubsystem extends SubsystemBase {
 
         @Override
         public void periodic() {
+                // temporary
+                frontLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(90)));
+
                 double currentTime = Timer.getFPGATimestamp();
                 double deltaTime = Math.max(0, currentTime - lastTime);
                 lastTime = currentTime;
 
-                // Read actual module states
+                // FIX: module order must match the kinematics constructor
                 SwerveModuleState[] actualStates = new SwerveModuleState[] {
-                                new SwerveModuleState(backLeft.getVelocityMetersPerSecond(), backLeft.getAngle()),
-                                new SwerveModuleState(backRight.getVelocityMetersPerSecond(), backRight.getAngle()),
+
                                 new SwerveModuleState(frontLeft.getVelocityMetersPerSecond(), frontLeft.getAngle()),
-                                new SwerveModuleState(frontRight.getVelocityMetersPerSecond(), frontRight.getAngle())
+                                new SwerveModuleState(frontRight.getVelocityMetersPerSecond(), frontRight.getAngle()),
+                                new SwerveModuleState(backLeft.getVelocityMetersPerSecond(), backLeft.getAngle()),
+                                new SwerveModuleState(backRight.getVelocityMetersPerSecond(), backRight.getAngle())
                 };
 
                 // Convert to chassis speeds
@@ -119,6 +125,9 @@ public class DriveSubsystem extends SubsystemBase {
                                 pose.getRotation().plus(new Rotation2d(dtheta)));
 
                 robotAngle = pose.getRotation();
+
+                // FIX: update Field2d visualization
+                field.setRobotPose(pose);
 
                 // Publish pose to NetworkTables
                 NetworkTableInstance.getDefault()

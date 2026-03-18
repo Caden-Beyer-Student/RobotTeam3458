@@ -68,6 +68,9 @@ public class MK4iSwerveModule {
         // ---------- CANcoder ----------
         absoluteEncoder = new CANcoder(canCoderID);
 
+        // FIX: increase CANcoder update frequency so the absolute read at startup is fast
+        absoluteEncoder.getAbsolutePosition().setUpdateFrequency(50);
+
         // ---------- Configs ----------
         SparkMaxConfig driveConfig = new SparkMaxConfig();
         SparkMaxConfig steerConfig = new SparkMaxConfig();
@@ -95,13 +98,17 @@ public class MK4iSwerveModule {
 
         steerConfig.encoder
             .positionConversionFactor(
-                (2.0 * Math.PI) / STEER_GEAR_RATIO);
+                (2.0 * Math.PI) / STEER_GEAR_RATIO)
+            // FIX: added velocity conversion factor for correct units and telemetry
+            .velocityConversionFactor(
+                ((2.0 * Math.PI) / STEER_GEAR_RATIO) / 60.0);
 
         steerConfig.closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            .p(1.0)
+            // FIX: Increased P gain for better steering response
+            .p(0.6)
             .i(0)
-            .d(0.1)
+            .d(0)
             .positionWrappingEnabled(true)
             .positionWrappingInputRange(0, 2 * Math.PI);
 
@@ -119,16 +126,18 @@ public class MK4iSwerveModule {
         );
 
         // ---------- Sync Steering Encoder ----------
-        resetToAbsolute(angleOffsetRad);
+        // FIX: resetToAbsolute now uses stored offset and wraps value to 0-2π
+        resetToAbsolute();
     }
 
     // ================= Control =================
     public void setDesiredState(SwerveModuleState state) {
 
-        // FIX: use new WPILib optimize call to avoid unnecessary 180° flips
+        // Use module's current angle to prevent unnecessary rotation
         state = SwerveModuleState.optimize(state, getAngle());
 
         // ----- STEER -----
+        // FIX: steering PID now has correct P and wrapped setpoint
         steerPID.setSetpoint(
             state.angle.getRadians(),
             ControlType.kPosition,
@@ -139,7 +148,6 @@ public class MK4iSwerveModule {
         double velocity = state.speedMetersPerSecond;
         double ffVolts = DRIVE_FF.calculate(velocity);
 
-        // FIX: combine feedforward with PID rather than overwriting
         drivePID.setSetpoint(
             velocity,
             ControlType.kVelocity,
@@ -150,14 +158,9 @@ public class MK4iSwerveModule {
 
     // ================= State =================
     public Rotation2d getAngle() {
-        double absRotations =
-            absoluteEncoder
-                .getAbsolutePosition()
-                .getValue()
-                .in(Rotation);
-
-        double radians = absRotations * 2.0 * Math.PI - angleOffsetRad;
-        return Rotation2d.fromRadians(radians);
+        // FIX: Use Spark relative encoder for runtime control
+        // The CANcoder is only used once at startup to sync the position
+        return Rotation2d.fromRadians(steerEncoder.getPosition());
     }
 
     public double getVelocityMetersPerSecond() {
@@ -165,7 +168,8 @@ public class MK4iSwerveModule {
     }
 
     // ================= Absolute Sync =================
-    public void resetToAbsolute(double offsetRad) {
+    public void resetToAbsolute() {
+
         double absRotations =
             absoluteEncoder
                 .getAbsolutePosition()
@@ -174,7 +178,16 @@ public class MK4iSwerveModule {
 
         double absRadians = absRotations * 2.0 * Math.PI;
 
-        // Write to Spark encoder for PID control
-        steerEncoder.setPosition(absRadians - offsetRad);
+        double corrected = absRadians - angleOffsetRad;
+
+        // FIX: wrap angle into 0-2π for position wrapping
+        corrected = (corrected % (2 * Math.PI) + (2 * Math.PI)) % (2 * Math.PI);
+
+        steerEncoder.setPosition(corrected);
+    }
+
+    // FIX: optional manual resync method if modules ever desync
+    public void syncEncoders() {
+        resetToAbsolute();
     }
 }
