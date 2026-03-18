@@ -19,10 +19,10 @@ public class DriveSubsystem extends SubsystemBase {
         private final Field2d field = new Field2d();
 
         // Initialize MK4iSwerveModules with proper CAN IDs and offsets
-        private final MK4iSwerveModule frontLeft = new MK4iSwerveModule(1, 2, 11, 0.0);
-        private final MK4iSwerveModule frontRight = new MK4iSwerveModule(3, 4, 12, 0.0);
-        private final MK4iSwerveModule backLeft = new MK4iSwerveModule(5, 6, 13, 0.0);
-        private final MK4iSwerveModule backRight = new MK4iSwerveModule(7, 8, 14, 0.0);
+        private final MK4iSwerveModule frontLeft = new MK4iSwerveModule(1, 2, 11, 1.570796);
+        private final MK4iSwerveModule frontRight = new MK4iSwerveModule(3, 4, 12, 1.570796);
+        private final MK4iSwerveModule backLeft = new MK4iSwerveModule(5, 6, 13, 1.570796);
+        private final MK4iSwerveModule backRight = new MK4iSwerveModule(7, 8, 14, 1.570796);
 
         private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
                         new Translation2d(WHEEL_BASE / 2, TRACK_WIDTH / 2),

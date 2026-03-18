@@ -11,7 +11,7 @@ import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.ClosedLoopSlot; // REQUIRED for new setSetpoint API
+import com.revrobotics.spark.ClosedLoopSlot;
 
 // ================= CTRE =================
 import com.ctre.phoenix6.hardware.CANcoder;
@@ -21,8 +21,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 
-// ================= Units (Phoenix 6 Angle handling) =================
-import static edu.wpi.first.units.Units.Rotation; // REQUIRED: Phoenix 6 Angle → rotations
+// ================= Units =================
+import static edu.wpi.first.units.Units.Rotation;
 
 public class MK4iSwerveModule {
 
@@ -30,24 +30,22 @@ public class MK4iSwerveModule {
     private final SparkMax driveMotor;
     private final SparkMax steerMotor;
 
-    private final RelativeEncoder driveEncoder;
-    private final RelativeEncoder steerEncoder;
-
     private final SparkClosedLoopController drivePID;
     private final SparkClosedLoopController steerPID;
 
     private final CANcoder absoluteEncoder;
+    private final RelativeEncoder driveEncoder;
+    private final RelativeEncoder steerEncoder;
 
-    // ================= Constants (SDS MK4i L2) =================
-    private static final double WHEEL_DIAMETER = 0.1016; // meters
+    // ================= Constants =================
+    private static final double WHEEL_DIAMETER = 0.1016;
     private static final double DRIVE_GEAR_RATIO = 6.75;
     private static final double STEER_GEAR_RATIO = 150.0 / 7.0;
 
-    private static final double MAX_SPEED = 4.5; // m/s
-
-    // ================= Feedforward =================
     private static final SimpleMotorFeedforward DRIVE_FF =
             new SimpleMotorFeedforward(0.2, 2.2);
+
+    private final double angleOffsetRad;
 
     public MK4iSwerveModule(
             int driveID,
@@ -55,45 +53,27 @@ public class MK4iSwerveModule {
             int canCoderID,
             double angleOffsetRad
     ) {
+        this.angleOffsetRad = angleOffsetRad;
 
         // ---------- Motors ----------
         driveMotor = new SparkMax(driveID, MotorType.kBrushless);
         steerMotor = new SparkMax(steerID, MotorType.kBrushless);
 
-        driveEncoder = driveMotor.getEncoder();
-        steerEncoder = steerMotor.getEncoder();
-
         drivePID = driveMotor.getClosedLoopController();
         steerPID = steerMotor.getClosedLoopController();
+
+        driveEncoder = driveMotor.getEncoder();
+        steerEncoder = steerMotor.getEncoder();
 
         // ---------- CANcoder ----------
         absoluteEncoder = new CANcoder(canCoderID);
 
-        // ---------- Config Objects ----------
+        // ---------- Configs ----------
         SparkMaxConfig driveConfig = new SparkMaxConfig();
         SparkMaxConfig steerConfig = new SparkMaxConfig();
 
-        // ===== STEER CONFIG =====
-        steerConfig
-            .inverted(true)
-            .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(20);
-
-        steerConfig.encoder
-            .positionConversionFactor(
-                (2.0 * Math.PI) / STEER_GEAR_RATIO);
-
-        steerConfig.closedLoop
-            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            .p(1.0)
-            .i(0.0)
-            .d(0.1)
-            .positionWrappingEnabled(true)
-            .positionWrappingInputRange(0.0, 2.0 * Math.PI);
-
-        // ===== DRIVE CONFIG =====
+        // ----- Drive -----
         driveConfig
-            .inverted(false)
             .idleMode(IdleMode.kBrake)
             .smartCurrentLimit(40);
 
@@ -104,38 +84,51 @@ public class MK4iSwerveModule {
                 ((Math.PI * WHEEL_DIAMETER) / DRIVE_GEAR_RATIO) / 60.0);
 
         driveConfig.closedLoop
-            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
             .p(0.1)
-            .i(0.0)
-            .d(0.0);
+            .i(0)
+            .d(0);
+
+        // ----- Steer -----
+        steerConfig
+            .idleMode(IdleMode.kBrake)
+            .smartCurrentLimit(20);
+
+        steerConfig.encoder
+            .positionConversionFactor(
+                (2.0 * Math.PI) / STEER_GEAR_RATIO);
+
+        steerConfig.closedLoop
+            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+            .p(1.0)
+            .i(0)
+            .d(0.1)
+            .positionWrappingEnabled(true)
+            .positionWrappingInputRange(0, 2 * Math.PI);
 
         // ---------- Apply Configs ----------
-        // CHANGED: use non-deprecated reset/persist enums
-        steerMotor.configure(
-            steerConfig,
-            ResetMode.kNoResetSafeParameters,
-            PersistMode.kNoPersistParameters
-        );
-
-        // CHANGED: use non-deprecated reset/persist enums
         driveMotor.configure(
             driveConfig,
             ResetMode.kNoResetSafeParameters,
             PersistMode.kNoPersistParameters
         );
 
-        // ---------- Sync Absolute Encoder ----------
+        steerMotor.configure(
+            steerConfig,
+            ResetMode.kNoResetSafeParameters,
+            PersistMode.kNoPersistParameters
+        );
+
+        // ---------- Sync Steering Encoder ----------
         resetToAbsolute(angleOffsetRad);
     }
 
     // ================= Control =================
     public void setDesiredState(SwerveModuleState state) {
 
-        // CHANGED: non-deprecated instance optimize
-        state.optimize(getAngle());
+        // FIX: use new WPILib optimize call to avoid unnecessary 180° flips
+        state = SwerveModuleState.optimize(state, getAngle());
 
         // ----- STEER -----
-        // CHANGED: correct setSetpoint signature (slot required)
         steerPID.setSetpoint(
             state.angle.getRadians(),
             ControlType.kPosition,
@@ -146,22 +139,25 @@ public class MK4iSwerveModule {
         double velocity = state.speedMetersPerSecond;
         double ffVolts = DRIVE_FF.calculate(velocity);
 
-        // CHANGED: feedforward voltage is NOT a parameter of setSetpoint
+        // FIX: combine feedforward with PID rather than overwriting
         drivePID.setSetpoint(
             velocity,
             ControlType.kVelocity,
-            ClosedLoopSlot.kSlot0
+            ClosedLoopSlot.kSlot0,
+            ffVolts
         );
-
-        // CHANGED: apply feedforward separately
-        driveMotor.setVoltage(ffVolts);
     }
 
     // ================= State =================
     public Rotation2d getAngle() {
-        return Rotation2d.fromRadians(
-            steerEncoder.getPosition()
-        );
+        double absRotations =
+            absoluteEncoder
+                .getAbsolutePosition()
+                .getValue()
+                .in(Rotation);
+
+        double radians = absRotations * 2.0 * Math.PI - angleOffsetRad;
+        return Rotation2d.fromRadians(radians);
     }
 
     public double getVelocityMetersPerSecond() {
@@ -170,9 +166,6 @@ public class MK4iSwerveModule {
 
     // ================= Absolute Sync =================
     public void resetToAbsolute(double offsetRad) {
-
-        // CHANGED: Phoenix 6 returns StatusSignal<Angle>, NOT double
-        // Angle must be converted using units
         double absRotations =
             absoluteEncoder
                 .getAbsolutePosition()
@@ -181,6 +174,7 @@ public class MK4iSwerveModule {
 
         double absRadians = absRotations * 2.0 * Math.PI;
 
+        // Write to Spark encoder for PID control
         steerEncoder.setPosition(absRadians - offsetRad);
     }
 }
