@@ -53,7 +53,7 @@ public class RobotContainer {
             new DriveCommand(
                 drive,
                 () -> applyDeadzone(-driverController.getLeftY(), JOYSTICK_DEADZONE),
-                () -> applyDeadzone(-driverController.getLeftX(), JOYSTICK_DEADZONE),
+                () -> applyDeadzone(driverController.getLeftX(), JOYSTICK_DEADZONE),
                 () -> applyDeadzone(-driverController.getRightX(), JOYSTICK_DEADZONE)
             )
         );
@@ -69,10 +69,9 @@ public class RobotContainer {
         // ------------------------
 
         // Driver B button: aim at goal
-        new JoystickButton(driverController, XboxController.Button.kB.value)
-            .onTrue(new TurnToAngle(drive, () -> drive.getAngleToGoal(goalPose)));
-
-        // ------------------------
+        // Driver B button: aim at goal
+new JoystickButton(driverController, XboxController.Button.kB.value)
+    .onTrue(new TurnToAngle(drive, () -> drive.getAngleToGoal(goalPose)));        // ------------------------
         // Operator controls
         // ------------------------
 

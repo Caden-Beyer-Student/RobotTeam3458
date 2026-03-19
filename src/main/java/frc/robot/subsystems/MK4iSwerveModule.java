@@ -26,7 +26,6 @@ import static edu.wpi.first.units.Units.Rotation;
 
 public class MK4iSwerveModule {
 
-    // ================= Hardware =================
     private final SparkMax driveMotor;
     private final SparkMax steerMotor;
 
@@ -37,7 +36,6 @@ public class MK4iSwerveModule {
     private final RelativeEncoder driveEncoder;
     private final RelativeEncoder steerEncoder;
 
-    // ================= Constants =================
     private static final double WHEEL_DIAMETER = 0.1016;
     private static final double DRIVE_GEAR_RATIO = 6.75;
     private static final double STEER_GEAR_RATIO = 150.0 / 7.0;
@@ -55,7 +53,6 @@ public class MK4iSwerveModule {
     ) {
         this.angleOffsetRad = angleOffsetRad;
 
-        // ---------- Motors ----------
         driveMotor = new SparkMax(driveID, MotorType.kBrushless);
         steerMotor = new SparkMax(steerID, MotorType.kBrushless);
 
@@ -65,101 +62,49 @@ public class MK4iSwerveModule {
         driveEncoder = driveMotor.getEncoder();
         steerEncoder = steerMotor.getEncoder();
 
-        // ---------- CANcoder ----------
         absoluteEncoder = new CANcoder(canCoderID);
-
-        // FIX: increase CANcoder update frequency so the absolute read at startup is fast
         absoluteEncoder.getAbsolutePosition().setUpdateFrequency(50);
 
-        // ---------- Configs ----------
+        // Configs
         SparkMaxConfig driveConfig = new SparkMaxConfig();
         SparkMaxConfig steerConfig = new SparkMaxConfig();
 
-        // ----- Drive -----
-        driveConfig
-            .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(40);
-
+        driveConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(40);
         driveConfig.encoder
-            .positionConversionFactor(
-                (Math.PI * WHEEL_DIAMETER) / DRIVE_GEAR_RATIO)
-            .velocityConversionFactor(
-                ((Math.PI * WHEEL_DIAMETER) / DRIVE_GEAR_RATIO) / 60.0);
+                .positionConversionFactor((Math.PI * WHEEL_DIAMETER) / DRIVE_GEAR_RATIO)
+                .velocityConversionFactor(((Math.PI * WHEEL_DIAMETER) / DRIVE_GEAR_RATIO) / 60.0);
+        driveConfig.closedLoop.p(0.1).i(0).d(0);
 
-        driveConfig.closedLoop
-            .p(0.1)
-            .i(0)
-            .d(0);
-
-        // ----- Steer -----
-        steerConfig
-            .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(20);
-
+        steerConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(20);
         steerConfig.encoder
-            .positionConversionFactor(
-                (2.0 * Math.PI) / STEER_GEAR_RATIO)
-            // FIX: added velocity conversion factor for correct units and telemetry
-            .velocityConversionFactor(
-                ((2.0 * Math.PI) / STEER_GEAR_RATIO) / 60.0);
-
+                .positionConversionFactor((2.0 * Math.PI) / STEER_GEAR_RATIO)
+                .velocityConversionFactor(((2.0 * Math.PI) / STEER_GEAR_RATIO) / 60.0);
         steerConfig.closedLoop
-            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            // FIX: Increased P gain for better steering response
-            .p(0.6)
-            .i(0)
-            .d(0)
-            .positionWrappingEnabled(true)
-            .positionWrappingInputRange(0, 2 * Math.PI);
+                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                .p(0.6).i(0).d(0)
+                .positionWrappingEnabled(true)
+                .positionWrappingInputRange(0, 2 * Math.PI);
 
-        // ---------- Apply Configs ----------
-        driveMotor.configure(
-            driveConfig,
-            ResetMode.kNoResetSafeParameters,
-            PersistMode.kNoPersistParameters
-        );
+        driveMotor.configure(driveConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        steerMotor.configure(steerConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
-        steerMotor.configure(
-            steerConfig,
-            ResetMode.kNoResetSafeParameters,
-            PersistMode.kNoPersistParameters
-        );
-
-        // ---------- Sync Steering Encoder ----------
-        // FIX: resetToAbsolute now uses stored offset and wraps value to 0-2π
+        // Sync steering encoder to CANcoder
         resetToAbsolute();
     }
 
-    // ================= Control =================
+    // ---------------- Control ----------------
     public void setDesiredState(SwerveModuleState state) {
-
-        // Use module's current angle to prevent unnecessary rotation
         state = SwerveModuleState.optimize(state, getAngle());
 
-        // ----- STEER -----
-        // FIX: steering PID now has correct P and wrapped setpoint
-        steerPID.setSetpoint(
-            state.angle.getRadians(),
-            ControlType.kPosition,
-            ClosedLoopSlot.kSlot0
-        );
+        steerPID.setSetpoint(state.angle.getRadians(), ControlType.kPosition, ClosedLoopSlot.kSlot0);
 
-        // ----- DRIVE -----
         double velocity = state.speedMetersPerSecond;
         double ffVolts = DRIVE_FF.calculate(velocity);
 
-        drivePID.setSetpoint(
-            velocity,
-            ControlType.kVelocity,
-            ClosedLoopSlot.kSlot0,
-            ffVolts
-        );
+        drivePID.setSetpoint(velocity, ControlType.kVelocity, ClosedLoopSlot.kSlot0, ffVolts);
     }
 
-    // ================= State =================
     public Rotation2d getAngle() {
-        // FIX: Use Spark relative encoder for runtime control
-        // The CANcoder is only used once at startup to sync the position
         return Rotation2d.fromRadians(steerEncoder.getPosition());
     }
 
@@ -167,27 +112,30 @@ public class MK4iSwerveModule {
         return driveEncoder.getVelocity();
     }
 
-    // ================= Absolute Sync =================
     public void resetToAbsolute() {
-
-        double absRotations =
-            absoluteEncoder
-                .getAbsolutePosition()
-                .getValue()
-                .in(Rotation);
-
+        double absRotations = absoluteEncoder.getAbsolutePosition().getValue().in(Rotation);
         double absRadians = absRotations * 2.0 * Math.PI;
-
-        double corrected = absRadians - angleOffsetRad;
-
-        // FIX: wrap angle into 0-2π for position wrapping
-        corrected = (corrected % (2 * Math.PI) + (2 * Math.PI)) % (2 * Math.PI);
-
+        double corrected = (absRadians - angleOffsetRad) % (2 * Math.PI);
+        corrected = (corrected + 2*Math.PI) % (2*Math.PI);
         steerEncoder.setPosition(corrected);
     }
 
-    // FIX: optional manual resync method if modules ever desync
     public void syncEncoders() {
         resetToAbsolute();
+    }
+
+    // ---------------- NEW ----------------
+    /** Move the module to the CANcoder absolute angle immediately */
+    public void moveToAbsoluteAngle() {
+        double absRotations = absoluteEncoder.getAbsolutePosition().getValue().in(Rotation);
+        double absRadians = absRotations * 2.0 * Math.PI;
+        double targetRadians = absRadians - angleOffsetRad;
+        targetRadians = (targetRadians + 2*Math.PI) % (2*Math.PI);
+
+        // Command steering motor to move
+        steerPID.setSetpoint(targetRadians, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+
+        // Sync relative encoder
+        steerEncoder.setPosition(targetRadians);
     }
 }
