@@ -25,60 +25,60 @@ public class ClimbRoutineCommand extends SequentialCommandGroup {
         double cylinderWait = 3.0;
 
         addCommands(
-            // ----- First cycle -----
-            new InstantCommand(climb::extendLongCyls, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(() -> climb.setMotorPower(1.0), climb),
-            new WaitCommand(MOTOR_TIME),
-            new InstantCommand(climb::stopMotor, climb),  // motor off
-            new WaitCommand(cylinderWait),
-            new InstantCommand(climb::extendStableCyl, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(climb::retractLongCyls, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(climb::extendShortCyls, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(climb::retractShortCyls, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(() -> climb.setMotorPower(-1.0), climb),
-            new WaitCommand(MOTOR_TIME),
-            new InstantCommand(climb::stopMotor, climb),  // motor off
-            new WaitCommand(cylinderWait),
+                // ----- First cycle -----
+                new InstantCommand(climb::extendLongCyls, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(() -> climb.setMotorPower(1.0), climb),
+                new WaitCommand(MOTOR_TIME),
+                new InstantCommand(climb::stopMotor, climb), // motor off
+                new WaitCommand(cylinderWait),
+                new InstantCommand(climb::extendStableCyl, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(climb::retractLongCyls, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(climb::extendShortCyls, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(climb::retractShortCyls, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(() -> climb.setMotorPower(-1.0), climb),
+                new WaitCommand(MOTOR_TIME),
+                new InstantCommand(climb::stopMotor, climb), // motor off
+                new WaitCommand(cylinderWait),
 
-            // ----- Second cycle -----
-            new InstantCommand(climb::extendLongCyls, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(() -> climb.setMotorPower(1.0), climb),
-            new WaitCommand(MOTOR_TIME),
-            new InstantCommand(climb::stopMotor, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(climb::retractLongCyls, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(climb::extendShortCyls, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(climb::retractShortCyls, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(() -> climb.setMotorPower(-1.0), climb),
-            new WaitCommand(MOTOR_TIME),
-            new InstantCommand(climb::stopMotor, climb),
-            new WaitCommand(cylinderWait),
+                // ----- Second cycle -----
+                new InstantCommand(climb::extendLongCyls, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(() -> climb.setMotorPower(1.0), climb),
+                new WaitCommand(MOTOR_TIME),
+                new InstantCommand(climb::stopMotor, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(climb::retractLongCyls, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(climb::extendShortCyls, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(climb::retractShortCyls, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(() -> climb.setMotorPower(-1.0), climb),
+                new WaitCommand(MOTOR_TIME),
+                new InstantCommand(climb::stopMotor, climb),
+                new WaitCommand(cylinderWait),
 
-            // ----- Third cycle -----
-            new InstantCommand(climb::extendLongCyls, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(() -> climb.setMotorPower(1.0), climb),
-            new WaitCommand(MOTOR_TIME),
-            new InstantCommand(climb::stopMotor, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(climb::retractLongCyls, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(climb::extendShortCyls, climb),
-            new WaitCommand(cylinderWait),
-            new InstantCommand(climb::retractShortCyls, climb),
-            new WaitCommand(cylinderWait)
+                // ----- Third cycle -----
+                new InstantCommand(climb::extendLongCyls, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(() -> climb.setMotorPower(1.0), climb),
+                new WaitCommand(MOTOR_TIME),
+                new InstantCommand(climb::stopMotor, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(climb::retractLongCyls, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(climb::extendShortCyls, climb),
+                new WaitCommand(cylinderWait),
+                new InstantCommand(climb::retractShortCyls, climb),
+                new WaitCommand(cylinderWait)
 
-            // End of sequence — cylinders stay in their last positions
-            // Motor is already stopped after each run
+        // End of sequence — cylinders stay in their last positions
+        // Motor is already stopped after each run
         );
     }
 }

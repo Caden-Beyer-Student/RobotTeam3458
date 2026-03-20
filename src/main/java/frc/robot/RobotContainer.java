@@ -95,9 +95,9 @@ new JoystickButton(driverController, XboxController.Button.kB.value)
             new JoystickButton(operatorController, XboxController.Button.kA.value);
 
         Trigger climbTrigger =
-            rightBumper
-                .and(leftBumper)
-                .and(aButton);
+            aButton;
+                // .and(leftBumper)
+                // .and(aButton);
 
         // Run climb routine ONLY while all three buttons are held
         climbTrigger.onTrue(
