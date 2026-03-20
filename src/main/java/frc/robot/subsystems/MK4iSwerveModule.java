@@ -87,14 +87,15 @@ public class MK4iSwerveModule {
                 ((Math.PI * WHEEL_DIAMETER) / DRIVE_GEAR_RATIO) / 60.0);
 
         driveConfig.closedLoop
-            .p(0.1)
+            .p(0.6)
             .i(0)
             .d(0);
 
         // ----- Steer -----
         steerConfig
-            .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(20);
+            .idleMode(IdleMode.kCoast)
+            .smartCurrentLimit(20)
+            .inverted(true);
 
         steerConfig.encoder
             .positionConversionFactor(
