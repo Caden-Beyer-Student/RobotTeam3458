@@ -53,7 +53,7 @@ public class RobotContainer {
             new DriveCommand(
                 drive,
                 () -> applyDeadzone(-driverController.getLeftY(), JOYSTICK_DEADZONE),
-                () -> applyDeadzone(driverController.getLeftX(), JOYSTICK_DEADZONE),
+                () -> applyDeadzone(-driverController.getLeftX(), JOYSTICK_DEADZONE),
                 () -> applyDeadzone(driverController.getRightX(), JOYSTICK_DEADZONE)
             )
         );

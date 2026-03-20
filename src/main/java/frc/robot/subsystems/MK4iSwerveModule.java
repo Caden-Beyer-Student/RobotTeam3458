@@ -87,7 +87,7 @@ public class MK4iSwerveModule {
                 ((Math.PI * WHEEL_DIAMETER) / DRIVE_GEAR_RATIO) / 60.0);
 
         driveConfig.closedLoop
-            .p(0.6)
+            .p(0.1)
             .i(0)
             .d(0);
 
