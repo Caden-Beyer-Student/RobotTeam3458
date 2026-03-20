@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -12,9 +13,9 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
  */
 public class ShooterSubsystem extends SubsystemBase {
 
-    private final VictorSPX shooterLeft = new VictorSPX(17);   // CAN ID
-    private final VictorSPX shooterRight = new VictorSPX(16);  // CAN ID
-    private final VictorSPX gateMotor = new VictorSPX(0);     // PWM port 0
+    private static final VictorSPX shooterLeft = new VictorSPX(17);   // CAN ID
+    private static final VictorSPX shooterRight = new VictorSPX(16);  // CAN ID
+    private static final Servo gateServo = new Servo(0);
 
     private static final double SHOOTER_POWER = 1.0;
     private static final double GATE_OPEN_POWER = 0.5;
@@ -36,15 +37,11 @@ public class ShooterSubsystem extends SubsystemBase {
     // -------------------
     // Gate
     // -------------------
-    public void openGate() {
-        gateMotor.set(ControlMode.PercentOutput, GATE_OPEN_POWER);
+    public static void openGate() {
+        gateServo.setAngle(15);
     }
 
-    public void closeGate() {
-        gateMotor.set(ControlMode.PercentOutput, GATE_CLOSE_POWER);
-    }
-
-    public void stopGate() {
-        gateMotor.set(ControlMode.PercentOutput, 0.0);
+    public static void closeGate() {
+        gateServo.setAngle(55);
     }
 }

@@ -31,24 +31,16 @@ public class ShootCommand extends Command {
 
     @Override
     public void initialize() {
-        // 1️⃣ Safe startup: close gate
-        shooter.closeGate();
 
         // 2️⃣ Start flywheel
         shooter.startFlywheel();
 
-        // 3️⃣ Schedule opening gate after spin-up
-        new WaitCommand(SPIN_UP_TIME)
-                .andThen(new InstantCommand(shooter::openGate))
-                .schedule();
     }
 
     @Override
     public void end(boolean interrupted) {
         // 4️⃣ Shutdown sequence: close gate, keep flywheel spinning, then stop
         shutdownSequence = new SequentialCommandGroup(
-                new InstantCommand(shooter::closeGate),
-                new WaitCommand(SPIN_DOWN_DELAY),
                 new InstantCommand(shooter::stopFlywheel)
         );
         shutdownSequence.schedule();

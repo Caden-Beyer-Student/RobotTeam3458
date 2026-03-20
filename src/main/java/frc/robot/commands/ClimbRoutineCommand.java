@@ -26,6 +26,8 @@ public class ClimbRoutineCommand extends SequentialCommandGroup {
 
         addCommands(
                 // ----- First cycle -----
+                new InstantCommand(() -> climb.setMotorPower(1.0), climb),
+                new WaitCommand(MOTOR_TIME),
                 new InstantCommand(climb::extendLongCyls, climb),
                 new WaitCommand(cylinderWait),
                 new InstantCommand(() -> climb.setMotorPower(1.0), climb),

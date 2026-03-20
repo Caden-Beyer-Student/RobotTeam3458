@@ -4,8 +4,10 @@ import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.ClimbSubsystem;
 import frc.robot.commands.DriveCommand;
+import frc.robot.commands.JuggleCommand;
 import frc.robot.commands.TurnToAngle;
 import frc.robot.commands.ShootCommand;
+import frc.robot.commands.ShootGateCommand;
 import frc.robot.commands.ClimbRoutineCommand;
 
 import edu.wpi.first.wpilibj.XboxController;
@@ -52,8 +54,8 @@ public class RobotContainer {
         drive.setDefaultCommand(
             new DriveCommand(
                 drive,
-                () -> applyDeadzone(-driverController.getLeftY(), JOYSTICK_DEADZONE),
-                () -> applyDeadzone(-driverController.getLeftX(), JOYSTICK_DEADZONE),
+                () -> applyDeadzone(driverController.getLeftY(), JOYSTICK_DEADZONE),
+                () -> applyDeadzone(driverController.getLeftX(), JOYSTICK_DEADZONE),
                 () -> applyDeadzone(driverController.getRightX(), JOYSTICK_DEADZONE)
             )
         );
@@ -70,8 +72,8 @@ public class RobotContainer {
 
         // Driver B button: aim at goal
         // Driver B button: aim at goal
-new JoystickButton(driverController, XboxController.Button.kB.value)
-    .onTrue(new TurnToAngle(drive, () -> drive.getAngleToGoal(goalPose)));        // ------------------------
+// new JoystickButton(driverController, XboxController.Button.kB.value)
+//     .onTrue(new TurnToAngle(drive, () -> drive.getAngleToGoal(goalPose)));        // ------------------------
         // Operator controls
         // ------------------------
 
@@ -80,29 +82,36 @@ new JoystickButton(driverController, XboxController.Button.kB.value)
             new Trigger(() -> operatorController.getRightTriggerAxis() > 0.2);
         rightTrigger.whileTrue(new ShootCommand(shooter));
 
-        // ------------------------
-        // CLIMB SAFETY COMBINATION
-        // Right Bumper + Left Bumper + A must ALL be held
-        // ------------------------
+new JoystickButton(driverController, XboxController.Button.kRightBumper.value)
+    .whileTrue(new JuggleCommand());
 
-        JoystickButton rightBumper =
-            new JoystickButton(operatorController, XboxController.Button.kRightBumper.value);
+    Trigger leftTrigger =
+    new Trigger(() -> operatorController.getLeftTriggerAxis() > 0.2);
+    leftTrigger.whileTrue(new ShootGateCommand());
 
-        JoystickButton leftBumper =
-            new JoystickButton(operatorController, XboxController.Button.kLeftBumper.value);
+        // // ------------------------
+        // // CLIMB SAFETY COMBINATION
+        // // Right Bumper + Left Bumper + A must ALL be held
+        // // ------------------------
 
-        JoystickButton aButton =
-            new JoystickButton(operatorController, XboxController.Button.kA.value);
+        // JoystickButton rightBumper =
+        //     new JoystickButton(operatorController, XboxController.Button.kRightBumper.value);
 
-        Trigger climbTrigger =
-            aButton;
-                // .and(leftBumper)
-                // .and(aButton);
+        // JoystickButton leftBumper =
+        //     new JoystickButton(operatorController, XboxController.Button.kLeftBumper.value);
 
-        // Run climb routine ONLY while all three buttons are held
-        climbTrigger.onTrue(
-            new ClimbRoutineCommand(climb)
-        );
+        // JoystickButton aButton =
+        //     new JoystickButton(operatorController, XboxController.Button.kA.value);
+
+        // Trigger climbTrigger =
+        //     aButton;
+        //         // .and(leftBumper)
+        //         // .and(aButton);
+
+        // // Run climb routine ONLY while all three buttons are held
+        // climbTrigger.onTrue(
+        //     new ClimbRoutineCommand(climb)
+        // );
     }
 
     // ------------------------

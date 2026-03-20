@@ -21,6 +21,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 
+import static edu.wpi.first.units.Units.Radians;
 // ================= Units =================
 import static edu.wpi.first.units.Units.Rotation;
 
@@ -171,13 +172,11 @@ public class MK4iSwerveModule {
     // ================= Absolute Sync =================
     public void resetToAbsolute() {
 
-        double absRotations =
+        double absRadians =
             absoluteEncoder
                 .getAbsolutePosition()
                 .getValue()
-                .in(Rotation);
-
-        double absRadians = absRotations * 2.0 * Math.PI;
+                .in(Radians);
 
         double corrected = absRadians - angleOffsetRad;
 

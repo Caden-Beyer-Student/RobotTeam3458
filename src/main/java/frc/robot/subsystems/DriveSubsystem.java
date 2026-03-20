@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class DriveSubsystem extends SubsystemBase {
 
-        private static final double MAX_SPEED = 1.5; // m/s
+        private static final double MAX_SPEED = 3; // m/s
         private static final double MAX_ANGULAR_SPEED = 2 * Math.PI;
 
         private final double TRACK_WIDTH = 0.6;
