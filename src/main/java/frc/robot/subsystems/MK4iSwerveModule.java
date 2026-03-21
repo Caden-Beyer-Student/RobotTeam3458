@@ -108,7 +108,7 @@ public class MK4iSwerveModule {
         steerConfig.closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
             // FIX: Increased P gain for better steering response
-            .p(0.3)
+            .p(0.4)
             .i(0)
             .d(0)
             .positionWrappingEnabled(true)

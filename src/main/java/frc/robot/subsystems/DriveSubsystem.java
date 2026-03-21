@@ -13,8 +13,10 @@ public class DriveSubsystem extends SubsystemBase {
         private static final double MAX_SPEED = 3; // m/s
         private static final double MAX_ANGULAR_SPEED = 2 * Math.PI;
 
-        private final double TRACK_WIDTH = 0.6;
-        private final double WHEEL_BASE = 0.6;
+        private final double TRACK_WIDTH = 19.5 / 39.375;
+        // 25/19.5
+
+        private final double WHEEL_BASE = 25 / 39.375;
 
         private final Field2d field = new Field2d();
 
@@ -93,14 +95,11 @@ public class DriveSubsystem extends SubsystemBase {
 
         @Override
         public void periodic() {
-                // temporary
-                frontLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(90)));
 
                 double currentTime = Timer.getFPGATimestamp();
                 double deltaTime = Math.max(0, currentTime - lastTime);
                 lastTime = currentTime;
 
-        
                 SmartDashboard.putNumber("FrontLeftEncoder", frontLeft.getAngle().getDegrees());
                 SmartDashboard.putNumber("FrontRightEncoder", frontRight.getAngle().getDegrees());
                 SmartDashboard.putNumber("BackLeftEncoder", backLeft.getAngle().getDegrees());
