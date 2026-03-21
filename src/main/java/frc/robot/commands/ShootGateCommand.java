@@ -31,7 +31,7 @@ public class ShootGateCommand extends Command {
     public void end(boolean interrupted) {
         shooter.closeGate();
 
-        // test
+        // testing again
 
     }
 
