@@ -87,7 +87,7 @@ new JoystickButton(driverController, XboxController.Button.kRightBumper.value)
 
     Trigger leftTrigger =
     new Trigger(() -> operatorController.getLeftTriggerAxis() > 0.2);
-    leftTrigger.whileTrue(new ShootGateCommand());
+    leftTrigger.whileTrue(new ShootGateCommand(shooter));
 
         // // ------------------------
         // // CLIMB SAFETY COMBINATION
