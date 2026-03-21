@@ -7,12 +7,14 @@ import java.util.function.Supplier;
 
 public class JuggleCommand extends Command {
 
+    @Override
     public void initialize() {
         JuggleSubsystem.solenoidUp();
 
     }
 
-    public void end() {
+    @Override
+    public void end(boolean interrupted) {
         JuggleSubsystem.solenoidDown();
 
     }

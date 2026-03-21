@@ -42,6 +42,6 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public static void closeGate() {
-        gateServo.setAngle(45);
+        gateServo.setAngle(50);
     }
 }

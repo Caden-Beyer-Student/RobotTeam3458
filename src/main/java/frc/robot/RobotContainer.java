@@ -82,7 +82,7 @@ public class RobotContainer {
             new Trigger(() -> operatorController.getRightTriggerAxis() > 0.2);
         rightTrigger.whileTrue(new ShootCommand(shooter));
 
-new JoystickButton(driverController, XboxController.Button.kRightBumper.value)
+new JoystickButton(operatorController, XboxController.Button.kB.value)
     .whileTrue(new JuggleCommand());
 
     Trigger leftTrigger =
