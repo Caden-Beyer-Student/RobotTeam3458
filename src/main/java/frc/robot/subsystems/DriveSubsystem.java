@@ -133,7 +133,7 @@ public class DriveSubsystem extends SubsystemBase {
                 pose.getRotation().plus(new Rotation2d(dtheta)));
 
         // ==== NAVX UPDATE ====
-        robotAngle = Rotation2d.fromDegrees(-m_gyro.getYaw());
+        robotAngle = Rotation2d.fromDegrees(-m_gyro.getYaw() + 180);
         SmartDashboard.putNumber("Gyro Yaw", m_gyro.getYaw());
 
         // Update Field2d
