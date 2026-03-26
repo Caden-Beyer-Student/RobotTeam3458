@@ -17,7 +17,7 @@ public class ClimbMotorCommand extends Command {
     private static boolean extended = false;
 
     // Motor power
-    private static final double MOTOR_POWER = 0.4;
+    private static final double MOTOR_POWER = 1;
 
     public ClimbMotorCommand(ClimbSubsystem climb) {
         this.climb = climb;
