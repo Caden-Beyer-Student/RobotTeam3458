@@ -111,11 +111,11 @@ public class ClimbSubsystem extends SubsystemBase {
     // LIMIT SWITCH HELPERS (ADDED)
     // -------------------
     public boolean isTopLimitHit() {
-        return !topLimit.get(); // normally closed switch
+        return topLimit.get(); // normally closed switch
     }
 
     public boolean isBottomLimitHit() {
-        return !bottomLimit.get();
+        return bottomLimit.get();
     }
 
     // -------------------
