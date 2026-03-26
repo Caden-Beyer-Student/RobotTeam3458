@@ -1,13 +1,13 @@
 package frc.robot.commands;
 
-import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.RobotDriveSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.geometry.Rotation2d;
 import java.util.function.Supplier;
 
 public class TurnToAngle extends Command {
 
-    private final DriveSubsystem drive;
+    private final RobotDriveSubsystem drive;
     private final Supplier<Rotation2d> targetSupplier;
 
     // PD gains
@@ -19,7 +19,7 @@ public class TurnToAngle extends Command {
 
     private double lastError = 0.0;
 
-    public TurnToAngle(DriveSubsystem drive, Supplier<Rotation2d> targetSupplier) {
+    public TurnToAngle(RobotDriveSubsystem drive, Supplier<Rotation2d> targetSupplier) {
         this.drive = drive;
         this.targetSupplier = targetSupplier;
         addRequirements(drive);

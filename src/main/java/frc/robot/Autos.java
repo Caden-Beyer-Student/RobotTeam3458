@@ -8,13 +8,10 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 
 public final class Autos {
 
-    public static Command simpleForwardAuto(DriveSubsystem drive) {
+    public static Command simpleForwardAuto(FieldDriveSubsystem drive) {
 
         return new SequentialCommandGroup(
-                new RunCommand(
-                        () -> drive.drive(1, 0, 0),
-                        drive
-                ).withTimeout(1)
+            
         );
     }
 }

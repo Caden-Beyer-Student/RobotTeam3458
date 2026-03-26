@@ -1,14 +1,15 @@
 package frc.robot;
 
-import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.ClimbSubsystem;
-import frc.robot.commands.DriveCommand;
+import frc.robot.subsystems.FieldDriveSubsystem;
 import frc.robot.commands.JuggleCommand;
-import frc.robot.commands.TurnToAngle;
 import frc.robot.commands.ShootCommand;
 import frc.robot.commands.ShootGateCommand;
-import frc.robot.commands.ClimbRoutineCommand;
+import frc.robot.commands.ClimbArmCommand;
+import frc.robot.commands.ClimbMotorCommand;
+import frc.robot.commands.ClimbStableCommand;
+import frc.robot.commands.FieldDriveCommand;
 
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -20,23 +21,14 @@ import edu.wpi.first.math.geometry.Rotation2d;
 
 public class RobotContainer {
 
-    // ========================
-    // Subsystems
-    // ========================
-    private final DriveSubsystem drive = new DriveSubsystem();
-    private final ShooterSubsystem shooter = new ShooterSubsystem();
-    private final ClimbSubsystem climb = new ClimbSubsystem(); 
-    // ^ Added climb subsystem so the climb command has something to require
+    private final FieldDriveSubsystem fieldDriveSystem = new FieldDriveSubsystem();
 
-    // ========================
-    // Controllers
-    // ========================
+    private final ShooterSubsystem shooter = new ShooterSubsystem();
+    private final ClimbSubsystem climb = new ClimbSubsystem();
+
     private final XboxController driverController = new XboxController(0);
     private final XboxController operatorController = new XboxController(1);
 
-    // ========================
-    // Goal pose for aiming
-    // ========================
     public final Pose2d goalPose = new Pose2d(5.0, 4.03, new Rotation2d());
 
     private static final double JOYSTICK_DEADZONE = 0.075;
@@ -46,91 +38,61 @@ public class RobotContainer {
         configureButtonBindings();
     }
 
-    // ------------------------
-    // Default commands
-    // ------------------------
     private void configureDefaultCommands() {
-        // Default drive command
-        drive.setDefaultCommand(
-            new DriveCommand(
-                drive,
-                () -> applyDeadzone(driverController.getLeftY(), JOYSTICK_DEADZONE),
-                () -> applyDeadzone(driverController.getLeftX(), JOYSTICK_DEADZONE),
-                () -> applyDeadzone(-driverController.getRightX(), JOYSTICK_DEADZONE)
-            )
-        );
+
+        // Always field-oriented driving
+        fieldDriveSystem.setDefaultCommand(
+                new FieldDriveCommand(
+                        fieldDriveSystem,
+                        () -> applyDeadzone(driverController.getLeftY(), JOYSTICK_DEADZONE),
+                        () -> applyDeadzone(driverController.getLeftX(), JOYSTICK_DEADZONE),
+                        () -> applyDeadzone(-driverController.getRightX(), JOYSTICK_DEADZONE)));
     }
 
-    // ------------------------
-    // Button bindings
-    // ------------------------
     private void configureButtonBindings() {
 
-        // ------------------------
-        // Driver controls
-        // ------------------------
+        // Spin Up (Right Trigger)
+        Trigger rightTrigger = new Trigger(() -> operatorController.getRightTriggerAxis() > 0.2);
 
-        // Driver B button: aim at goal
-        // Driver B button: aim at goal
-// new JoystickButton(driverController, XboxController.Button.kB.value)
-//     .onTrue(new TurnToAngle(drive, () -> drive.getAngleToGoal(goalPose)));        // ------------------------
-        // Operator controls
-        // ------------------------
-
-        // Operator right trigger: shoot while held
-        Trigger rightTrigger =
-            new Trigger(() -> operatorController.getRightTriggerAxis() > 0.2);
         rightTrigger.whileTrue(new ShootCommand(shooter));
 
-new JoystickButton(operatorController, XboxController.Button.kB.value)
-    .whileTrue(new JuggleCommand());
+        // Juggle (A Button)
+        new JoystickButton(operatorController, XboxController.Button.kA.value)
+                .whileTrue(new JuggleCommand());
 
-    Trigger leftTrigger =
-    new Trigger(() -> operatorController.getLeftTriggerAxis() > 0.2);
-    leftTrigger.whileTrue(new ShootGateCommand(shooter));
+        // Shoot (Left Trigger)
+        Trigger leftTrigger = new Trigger(() -> operatorController.getLeftTriggerAxis() > 0.2);
 
-        // // ------------------------
-        // // CLIMB SAFETY COMBINATION
-        // // Right Bumper + Left Bumper + A must ALL be held
-        // // ------------------------
+        leftTrigger.whileTrue(new ShootGateCommand(shooter));
 
-        // JoystickButton rightBumper =
-        //     new JoystickButton(operatorController, XboxController.Button.kRightBumper.value);
+        // Climb Arm Toggle (X Button)
+        new JoystickButton(operatorController, XboxController.Button.kX.value)
+        .onTrue(new ClimbArmCommand(climb));
 
-        // JoystickButton leftBumper =
-        //     new JoystickButton(operatorController, XboxController.Button.kLeftBumper.value);
+        // Climb Motor Toggle (Y Button)
+        new JoystickButton(operatorController, XboxController.Button.kY.value)
+        .onTrue(new ClimbMotorCommand(climb));
 
-        // JoystickButton aButton =
-        //     new JoystickButton(operatorController, XboxController.Button.kA.value);
+        // Climb Bumper Toggle (B Button)
+        new JoystickButton(operatorController, XboxController.Button.kB.value)
+        .onTrue(new ClimbStableCommand(climb));
 
-        // Trigger climbTrigger =
-        //     aButton;
-        //         // .and(leftBumper)
-        //         // .and(aButton);
-
-        // // Run climb routine ONLY while all three buttons are held
-        // climbTrigger.onTrue(
-        //     new ClimbRoutineCommand(climb)
-        // );
     }
 
-    // ------------------------
-    // Deadzone helper
-    // ------------------------
     private static double applyDeadzone(double value, double deadzone) {
         if (Math.abs(value) < deadzone)
             return 0.0;
-        return Math.signum(value) * (Math.abs(value) - deadzone) / (1.0 - deadzone);
+
+        return Math.signum(value) *
+                (Math.abs(value) - deadzone) /
+                (1.0 - deadzone);
     }
 
-    // ------------------------
-    // Getters
-    // ------------------------
-    public DriveSubsystem getDriveSubsystem() {
-        return drive;
+    public FieldDriveSubsystem getDriveSubsystem() {
+        return fieldDriveSystem;
     }
 
     public Command getAutonomousCommand() {
-        return Autos.simpleForwardAuto(drive);
+        return Autos.simpleForwardAuto(fieldDriveSystem);
     }
 }

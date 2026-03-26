@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class DriveSubsystem extends SubsystemBase {
+public class RobotDriveSubsystem extends SubsystemBase {
 
     private static final double MAX_SPEED = 3; // m/s
     private static final double MAX_ANGULAR_SPEED = 2 * Math.PI;
@@ -47,7 +47,7 @@ public class DriveSubsystem extends SubsystemBase {
             new SwerveModuleState()
     };
 
-    public DriveSubsystem() {
+    public RobotDriveSubsystem() {
 
         // Sync encoders
         frontLeft.syncEncoders();
