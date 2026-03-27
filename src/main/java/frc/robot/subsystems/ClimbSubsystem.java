@@ -4,11 +4,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.NeutralMode; // ADDED
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
-import edu.wpi.first.wpilibj.DigitalInput; // ADDED
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; // ADDED
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * ClimbSubsystem
@@ -17,55 +17,28 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; // ADDED
  * - Two double-acting cylinders
  * - One motor (CAN Victor SPX)
  * - Two limit switches (DIO)
- *
- * Using REV Pneumatics Hub (REVPH)
  */
 public class ClimbSubsystem extends SubsystemBase {
 
-    // -------------------
-    // Pneumatics (REVPH)
-    // -------------------
-    private final DoubleSolenoid longCylinders = new DoubleSolenoid(
-            9,
-            PneumaticsModuleType.REVPH,
-            11,
-            10
-    );
+    private final DoubleSolenoid longCylinders = new DoubleSolenoid(9, PneumaticsModuleType.REVPH, 11, 10);
+    private final DoubleSolenoid stableCylinder = new DoubleSolenoid(9, PneumaticsModuleType.REVPH, 15, 7);
 
-    private final DoubleSolenoid stableCylinder = new DoubleSolenoid(
-            9,
-            PneumaticsModuleType.REVPH,
-            7,
-            15
-    );
-
-    // -------------------
-    // Motor (CAN Victor SPX)
-    // -------------------
     private final VictorSPX motor = new VictorSPX(15);
 
-    // -------------------
-    // LIMIT SWITCHES (ADDED)
-    // -------------------
-    private final DigitalInput topLimit = new DigitalInput(0);     // DIO 0
-    private final DigitalInput bottomLimit = new DigitalInput(1);  // DIO 1
+    private final DigitalInput topLimit = new DigitalInput(0);
+    private final DigitalInput bottomLimit = new DigitalInput(1);
 
-    // -------------------
-    // Constructor
-    // -------------------
+    private boolean extended = false; // tracks motor state
+
     public ClimbSubsystem() {
-
         longCylinders.set(Value.kReverse);
         stableCylinder.set(Value.kReverse);
-
         motor.set(ControlMode.PercentOutput, 0.0);
-
-        // ADDED: ensure motor stops quickly
         motor.setNeutralMode(NeutralMode.Brake);
     }
 
     // -------------------
-    // Pneumatic methods
+    // Pneumatics
     // -------------------
     public void extendLongCyls() {
         longCylinders.set(Value.kForward);
@@ -84,20 +57,17 @@ public class ClimbSubsystem extends SubsystemBase {
     }
 
     // -------------------
-    // Motor methods
+    // Motor
     // -------------------
     public void setMotorPower(double power) {
+        power = Math.max(-1.0, Math.min(1.0, power)); // clamp power
 
-        // ADDED: clamp power for safety
-        power = Math.max(-1.0, Math.min(1.0, power));
-
-        // ADDED: software limit protection
-        if (power > 0 && isTopLimitHit()) {
-            power = 0;
-        }
-
-        if (power < 0 && isBottomLimitHit()) {
-            power = 0;
+        if (power > 0) { // moving **retract**
+            if (isBottomLimitHit())
+                power = 0; // only care about bottom limit
+        } else if (power < 0) { // moving **extend**
+            if (isTopLimitHit())
+                power = 0; // only care about top limit
         }
 
         motor.set(ControlMode.PercentOutput, power);
@@ -108,24 +78,36 @@ public class ClimbSubsystem extends SubsystemBase {
     }
 
     // -------------------
-    // LIMIT SWITCH HELPERS (ADDED)
+    // Limit Switches
     // -------------------
     public boolean isTopLimitHit() {
-        return topLimit.get(); // normally closed switch
-    }
+        return topLimit.get();
+    } // normally open
 
     public boolean isBottomLimitHit() {
         return bottomLimit.get();
     }
 
     // -------------------
-    // Periodic
+    // Extended state
     // -------------------
+    public boolean isExtended() {
+        return extended;
+    }
+
+    public void setExtended(boolean state) {
+        extended = state;
+    }
+
     @Override
     public void periodic() {
-
-        // ADDED: telemetry for debugging
         SmartDashboard.putBoolean("Climb Top Limit", isTopLimitHit());
         SmartDashboard.putBoolean("Climb Bottom Limit", isBottomLimitHit());
+        SmartDashboard.putBoolean("Climb Extended", extended);
+
+        if (isTopLimitHit())
+            extended = true;
+        if (isBottomLimitHit())
+            extended = false;
     }
 }

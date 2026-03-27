@@ -5,11 +5,11 @@ import frc.robot.subsystems.ClimbSubsystem;
 
 public class ClimbStableCommand extends InstantCommand {
 
-    private static boolean extended = false; // tracks toggle state
+    private static boolean extended = true; // tracks toggle state
 
     public ClimbStableCommand(ClimbSubsystem climb) {
         super(() -> {
-            if (extended) {
+            if (!extended) {
                 climb.retractStableCyl();
             } else {
                 climb.extendStableCyl();

@@ -7,7 +7,9 @@ import frc.robot.commands.JuggleCommand;
 import frc.robot.commands.ShootCommand;
 import frc.robot.commands.ShootGateCommand;
 import frc.robot.commands.ClimbArmCommand;
-import frc.robot.commands.ClimbMotorCommand;
+import frc.robot.commands.ClimbMotorEmergencyStop;
+import frc.robot.commands.ClimbMotorExtendCommand;
+import frc.robot.commands.ClimbMotorRetractCommand;
 import frc.robot.commands.ClimbStableCommand;
 import frc.robot.commands.FieldDriveCommand;
 
@@ -44,8 +46,8 @@ public class RobotContainer {
         fieldDriveSystem.setDefaultCommand(
                 new FieldDriveCommand(
                         fieldDriveSystem,
-                        () -> applyDeadzone(driverController.getLeftY(), JOYSTICK_DEADZONE),
-                        () -> applyDeadzone(driverController.getLeftX(), JOYSTICK_DEADZONE),
+                        () -> applyDeadzone(-driverController.getLeftY(), JOYSTICK_DEADZONE),
+                        () -> applyDeadzone(-driverController.getLeftX(), JOYSTICK_DEADZONE),
                         () -> applyDeadzone(-driverController.getRightX(), JOYSTICK_DEADZONE)));
     }
 
@@ -67,15 +69,22 @@ public class RobotContainer {
 
         // Climb Arm Toggle (X Button)
         new JoystickButton(operatorController, XboxController.Button.kX.value)
-        .onTrue(new ClimbArmCommand(climb));
+                .onTrue(new ClimbArmCommand(climb));
 
-        // Climb Motor Toggle (Y Button)
+        // Climb Motor Extend (Right Bumper)
+        new JoystickButton(operatorController, XboxController.Button.kRightBumper.value)
+                .onTrue(new ClimbMotorExtendCommand(climb));
+
+        // Climb Motor Retract (Left Bumper)
+        new JoystickButton(operatorController, XboxController.Button.kLeftBumper.value)
+                .onTrue(new ClimbMotorRetractCommand(climb));
+
         new JoystickButton(operatorController, XboxController.Button.kY.value)
-        .onTrue(new ClimbMotorCommand(climb));
+                .onTrue(new ClimbMotorEmergencyStop(climb));
 
         // Climb Bumper Toggle (B Button)
         new JoystickButton(operatorController, XboxController.Button.kB.value)
-        .onTrue(new ClimbStableCommand(climb));
+                .onTrue(new ClimbStableCommand(climb));
 
     }
 
