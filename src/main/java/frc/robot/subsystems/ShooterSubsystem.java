@@ -19,7 +19,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final VictorSPX shooterRight = new VictorSPX(16); // CAN ID
     public static final DoubleSolenoid m_doubleSolenoid = new DoubleSolenoid(9, PneumaticsModuleType.REVPH, 12, 13);
 
-    private static final double SHOOTER_POWER = 1.0;
+    private static final double SHOOTER_POWER = 0.930;
     private static final double GATE_OPEN_POWER = 0.5;
     private static final double GATE_CLOSE_POWER = -0.5;
 

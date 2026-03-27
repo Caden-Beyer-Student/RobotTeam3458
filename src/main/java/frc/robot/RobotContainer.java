@@ -102,6 +102,6 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        return Autos.simpleForwardAuto(fieldDriveSystem);
+        return Autos.simpleBackwardAuto(fieldDriveSystem);
     }
 }
