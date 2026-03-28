@@ -27,7 +27,7 @@ public final class Autos {
 
             // Drive backward
             new RunCommand(() -> drive.drive(-0.5, 0.0, 0.0), drive)
-                    .withTimeout(1.59),
+                    .withTimeout(1.64),
 
             // Stop drivetrain
             new InstantCommand(() -> drive.drive(0.0, 0.0, 0.0), drive),
