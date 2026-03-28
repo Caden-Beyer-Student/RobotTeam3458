@@ -56,7 +56,7 @@ public class RobotContainer {
         // Spin Up (Right Trigger)
         Trigger rightTrigger = new Trigger(() -> operatorController.getRightTriggerAxis() > 0.2);
 
-        rightTrigger.whileTrue(new ShootCommand(shooter));
+        rightTrigger.whileTrue(new ShootCommand(shooter, 0.95));
 
         // Juggle (A Button)
         new JoystickButton(operatorController, XboxController.Button.kA.value)
@@ -102,6 +102,6 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        return Autos.simpleBackwardAuto(fieldDriveSystem);
+        return Autos.simpleBackwardAuto(fieldDriveSystem, shooter, climb);
     }
 }
